@@ -1,24 +1,49 @@
-# Assignment 2 - DIP with PyTorch
+This repository is Zhuowen Sun's implementation of Assignment_02 of DIP.
 
-### In this assignment, you will implement traditional DIP (Poisson Image Editing) and deep learning-based DIP (Pix2Pix) with PyTorch.
+## Requirements
+To install requirements:
+```basic
+python -m pip install -r requirements.txt
+```
+## Running
+To run basic transformation, run:
 
-### Resources:
-- [Assignment Slides](https://pan.ustc.edu.cn/share/index/66294554e01948acaf78)  
-- [Paper: Poisson Image Editing](https://www.cs.jhu.edu/~misha/Fall07/Papers/Perez03.pdf)
-- [Paper: Image-to-Image Translation with Conditional Adversarial Nets](https://phillipi.github.io/pix2pix/)
-- [Paper: Fully Convolutional Networks for Semantic Segmentation](https://arxiv.org/abs/1411.4038)
-- [PyTorch Installation & Docs](https://pytorch.org/)
+```basic
+python run_global_transform.py
+```
 
----
+To run point guided transformation, run:
 
-### 1. Implement Poisson Image Editing with PyTorch.
-Fill the [Polygon to Mask function](run_blending_gradio.py#L95) and the [Laplacian Distance Computation](run_blending_gradio.py#L115) of 'run_blending_gradio.py'.
+```
+python run_blending_gradio.py
+```
+## Results
 
+### Poission Image Editing
 
-### 2. Pix2Pix implementation.
-See [Pix2Pix subfolder](Pix2Pix/).
+Bear in water:
 
----
-### Requirements:
-- 请自行环境配置，推荐使用[conda环境](https://docs.anaconda.com/miniconda/)
-- 按照模板要求写Markdown版作业报告
+![image](https://github.com/stargazing0987/DIP/blob/master/Assignment2/figures/BearInWater/result.png)
+
+Equation in scene:
+
+![image](https://github.com/stargazing0987/DIP/blob/master/Assignment2/figures/Equation/result.png)
+
+Monalisa:
+
+![image](https://github.com/stargazing0987/DIP/blob/master/Assignment2/figures/Monalisa/result.png)
+
+Shark with guys:
+
+![image](https://github.com/stargazing0987/DIP/blob/master/Assignment2/figures/Shark/result.png)
+
+You can find the source images and target images in subfolder figures.
+
+### Pix2Pix
+
+Val_results after epoch 0,epoch 400 and epoch 795:
+
+![image](https://github.com/stargazing0987/DIP/blob/master/Assignment2/Pix2Pix/figures/result.png)
+
+You can find that after epoch 400, the loss doesn't decrease.And the results are not satisfying , that's because the dataset scale is so small to get good results.
+

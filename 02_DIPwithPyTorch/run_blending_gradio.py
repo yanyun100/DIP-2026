@@ -2,7 +2,9 @@ import gradio as gr
 from PIL import ImageDraw
 import numpy as np
 import torch
-
+import torch.nn.functional as F
+import matplotlib.path as mplPath
+import time
 # Initialize the polygon state
 def initialize_polygon():
     """
@@ -93,6 +95,7 @@ def update_background(background_image_original, polygon_state, dx, dy):
         return background_image_original
 
 # Create a binary mask from polygon points
+# Create a binary mask from polygon points
 def create_mask_from_points(points, img_h, img_w):
     """
     Creates a binary mask from the given polygon points.
@@ -105,32 +108,61 @@ def create_mask_from_points(points, img_h, img_w):
     Returns:
         np.ndarray: Binary mask of shape (img_h, img_w).
     """
+    #mask = np.zeros((img_h, img_w), dtype=np.uint8)
     mask = np.zeros((img_h, img_w), dtype=np.uint8)
-    ### FILL: Obtain Mask from Polygon Points. 
-    ### 0 indicates outside the Polygon.
-    ### 255 indicates inside the Polygon.
+    path = mplPath.Path(points[:, ::-1])
+    i, j = np.meshgrid(np.arange(img_h), np.arange(img_w))
+    index = path.contains_points(np.stack((i.flatten(), j.flatten()), axis=1)).reshape(i.shape)
+    mask[i[index], j[index]] = 255
 
+
+    # path=mplPath.Path(points)
+    # x_mat,y_mat=np.mgrid[0:img_h:1,0:img_w:1]
+    # x_array=x_mat.flatten()
+    # y_array=y_mat.flatten()
+    # test_points=np.column_stack([x_array,y_array])
+    # in_out_array=path.contains_points(test_points)
+    # ### FILL: Obtain Mask from Polygon Points.
+    # ### 0 indicates outside the Polygon.
+    # ### 255 indicates inside the Polygon.
+    # mask_array=np.zeros((img_h*img_w,1))
+    # mask_array[in_out_array]=255
+    # mask=mask_array.reshape(img_h,img_w)
+    # #print(mask[1:20,1:20])
     return mask
 
 # Calculate the Laplacian loss between the foreground and blended image
 def cal_laplacian_loss(foreground_img, foreground_mask, blended_img, background_mask):
     """
-    Computes the Laplacian loss between the foreground and blended images within the masks.
+       Computes the Laplacian loss between the foreground and blended images within the masks.
 
-    Args:
-        foreground_img (torch.Tensor): Foreground image tensor.
-        foreground_mask (torch.Tensor): Foreground mask tensor.
-        blended_img (torch.Tensor): Blended image tensor.
-        background_mask (torch.Tensor): Background mask tensor.
+       Args:
+           foreground_img (torch.Tensor): Foreground image tensor.
+           foreground_mask (torch.Tensor): Foreground mask tensor.
+           blended_img (torch.Tensor): Blended image tensor.
+           background_mask (torch.Tensor): Background mask tensor.
 
-    Returns:
-        torch.Tensor: The computed Laplacian loss.
-    """
+       Returns:
+           torch.Tensor: The computed Laplacian loss.
+       """
     loss = torch.tensor(0.0, device=foreground_img.device)
     ### FILL: Compute Laplacian Loss with https://pytorch.org/docs/stable/generated/torch.nn.functional.conv2d.html.
     ### Note: The loss is computed within the masks.
 
+    mask1=foreground_mask.squeeze().nonzero()
+    mask2=background_mask.squeeze().nonzero()
+
+    filters = torch.tensor([[0, 1, 0],
+                            [1, -4, 1],
+                            [0, 1, 0]], dtype=torch.float32, device='cuda').unsqueeze(0).unsqueeze(0).repeat(3, 1, 1, 1)
+    foreground_test = F.conv2d(foreground_img, filters, padding=1, groups=3)
+    blended_test = F.conv2d(blended_img, filters, padding=1, groups=3)
+
+    loss = F.mse_loss(foreground_test[0, :, mask1[:, 0], mask1[:, 1]], blended_test[0, :, mask2[:, 0], mask2[:, 1]])
+
+
     return loss
+
 
 # Perform Poisson image blending
 def blending(foreground_image_original, background_image_original, dx, dy, polygon_state):
@@ -176,10 +208,10 @@ def blending(foreground_image_original, background_image_original, dx, dy, polyg
     blended_img.requires_grad = True
 
     # Set up optimizer
-    optimizer = torch.optim.Adam([blended_img], lr=1e-2)
+    optimizer = torch.optim.Adam([blended_img], lr=1e-3)
 
     # Optimization loop
-    iter_num = 5000
+    iter_num = 4000
     for step in range(iter_num):
         blended_img_for_loss = blended_img.detach() * (1. - bg_mask_tensor) + blended_img * bg_mask_tensor  # Only blending in the mask region
 
@@ -192,7 +224,7 @@ def blending(foreground_image_original, background_image_original, dx, dy, polyg
         if step % 50 == 0:
             print(f'Optimize step: {step}, Laplacian distance loss: {loss.item()}')
 
-        if step == int(iter_num*2/3): ### decrease learning rate at the half step
+        if step == (iter_num // 2): ### decrease learning rate at the half step
             optimizer.param_groups[0]['lr'] *= 0.1
 
     # Convert result back to numpy array

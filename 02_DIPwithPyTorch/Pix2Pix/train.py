@@ -140,13 +140,13 @@ def main():
     """
     # Set device to GPU if available
     device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-
+    print(device)
     # Initialize datasets and dataloaders
     train_dataset = FacadesDataset(list_file='train_list.txt')
     val_dataset = FacadesDataset(list_file='val_list.txt')
 
-    train_loader = DataLoader(train_dataset, batch_size=100, shuffle=True, num_workers=4)
-    val_loader = DataLoader(val_dataset, batch_size=100, shuffle=False, num_workers=4)
+    train_loader = DataLoader(train_dataset, batch_size=100, shuffle=True, num_workers=12)
+    val_loader = DataLoader(val_dataset, batch_size=100, shuffle=False, num_workers=12)
 
     # Initialize model, loss function, and optimizer
     model = FullyConvNetwork().to(device)
@@ -157,7 +157,7 @@ def main():
     scheduler = StepLR(optimizer, step_size=200, gamma=0.2)
 
     # Training loop
-    num_epochs = 300
+    num_epochs = 800
     for epoch in range(num_epochs):
         train_one_epoch(model, train_loader, optimizer, criterion, device, epoch, num_epochs)
         validate(model, val_loader, criterion, device, epoch, num_epochs)
@@ -165,8 +165,8 @@ def main():
         # Step the scheduler after each epoch
         scheduler.step()
 
-        # Save model checkpoint every 50 epochs
-        if (epoch + 1) % 50 == 0:
+        # Save model checkpoint every 20 epochs
+        if (epoch + 1) % 20 == 0:
             os.makedirs('checkpoints', exist_ok=True)
             torch.save(model.state_dict(), f'checkpoints/pix2pix_model_epoch_{epoch + 1}.pth')
 
