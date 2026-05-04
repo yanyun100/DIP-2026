@@ -1,0 +1,18 @@
+{
+  "views": 50,
+  "points": 20000,
+  "visible_observations": 805089,
+  "iterations": 1200,
+  "initial_reprojection_px": 395.54241943359375,
+  "final_reprojection_px": 11.175361633300781,
+  "focal": 1152.11376953125,
+  "outputs": [
+    "reconstruction.obj",
+    "reconstruction.ply",
+    "loss_curve.png",
+    "point_cloud_preview.png",
+    "points3d.npy",
+    "camera_euler_xyz.npy",
+    "camera_translation.npy"
+  ]
+}

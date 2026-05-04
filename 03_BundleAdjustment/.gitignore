@@ -1,0 +1,6 @@
+# Local COLMAP binaries and downloaded archives.
+tools/
+
+# Generated COLMAP reconstruction workspace.
+data/colmap/
+data/vis/
